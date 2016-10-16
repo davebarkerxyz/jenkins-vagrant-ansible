@@ -12,7 +12,7 @@ The Vagrantfile uses Debian Jessie and creates a private network, giving the hos
 The Ansible playbook installs some basic development packages (most aren't actually needed to run Jenkins but handy for
 hacking on the development server nonetheless), installs Jenkins and creates a new user with sudo privileges.
 
-It expects to find a authorized_keys file containing your SSH public key in the files directory.
+It expects to find a `authorized_keys` file containing your SSH public key in the files directory.
 
 
 Usage

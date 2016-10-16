@@ -3,7 +3,7 @@
   become: True
 
   vars:
-    user: jenkins
+    user: developer
 
   tasks:
     - name: Upgrade packages
