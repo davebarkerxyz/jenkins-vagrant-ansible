@@ -1,0 +1,91 @@
+---
+- hosts: all
+  become: True
+
+  vars:
+    user: jenkins
+
+  tasks:
+    - name: Upgrade packages
+      apt: upgrade=dist update_cache=yes cache_valid_time=3600
+
+    - name: Install base packages
+      apt: name={{ item }} update_cache=yes cache_valid_time=3600
+      with_items:
+        - sudo
+        - git
+        - mercurial
+        - subversion
+        - build-essential
+        - tmux
+        - vim-nox
+        - python3
+        - python-pip
+        - python3-pip
+        - openjdk-7-jdk
+
+    - name: Add Jenkins repository key
+      apt_key:
+        url: "https://pkg.jenkins.io/debian/jenkins.io.key"
+        state: present
+
+    - name: Clean apt lists
+      file:
+        path: "/var/lib/apt/lists/*"
+        state: absent
+
+    - name: Update apt following apt mergelists fix
+      apt: update_cache=yes
+
+    - name: Add Jenkins repository
+      apt_repository:
+        repo: "deb http://pkg.jenkins.io/debian-stable binary/"
+        state: present
+
+    - name: Install Jenkins
+      apt: name=jenkins update_cache=yes cache_valid_time=3600
+
+    - name: Add user
+      user:
+        name: "{{ user }}"
+        shell: /bin/bash
+        comment: "Developer"
+        groups: sudo
+        append: yes
+        home: "/home/{{ user }}"
+
+    - name: Create SSH directory
+      file:
+        path: "/home/{{ user }}/.ssh"
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        state: directory
+
+    - name: Add authorized SSH keys
+      copy:
+        src: files/authorized_keys
+        dest: "/home/{{ user }}/.ssh"
+        mode: 0600
+        owner: "{{ user }}"
+        group: "{{ user }}"
+
+    - name: Allow sudo group to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%sudo'
+        line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+
+    - name: Sync home template
+      synchronize:
+        src: files/home/
+        dest: "/home/{{ user }}"
+        owner: no
+        group: no
+
+    - name: Set home owner
+      file:
+        path: "/home/{{ user }}"
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        recurse: yes
